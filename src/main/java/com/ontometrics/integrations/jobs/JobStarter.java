@@ -1,15 +1,13 @@
 package com.ontometrics.integrations.jobs;
 
-import com.ontometrics.integrations.configuration.ConfigurationAccessError;
-import com.ontometrics.integrations.configuration.ConfigurationFactory;
-import com.ontometrics.integrations.configuration.EventProcessorConfiguration;
-import com.ontometrics.integrations.configuration.SlackInstance;
+import com.ontometrics.integrations.configuration.*;
 import com.ontometrics.integrations.sources.AuthenticatedHttpStreamProvider;
 import com.ontometrics.integrations.sources.ChannelMapperFactory;
 import com.ontometrics.integrations.sources.StreamProvider;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.rmi.runtime.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +41,16 @@ public class JobStarter {
                 configuration.getString("PROP.YOUTRACK_USERNAME"), configuration.getString("PROP.YOUTRACK_PASSWORD")
         );
 
-        scheduleTask(timer, new EventListenerImpl(streamProvider, new SlackInstance.Builder()
-                .channelMapper(ChannelMapperFactory.fromConfiguration(configuration, "youtrack-slack.")).build()));
+        if (configuration.getString("PROP.HIPCHAT_AUTH_TOKEN") != null) {
+            logger.info("Starting Hipchat client");
+            scheduleTask(timer, new EventListenerImpl(streamProvider, new HipchatInstance()));
+        }
+
+        if (configuration.getString("PROP.SLACK_AUTH_TOKEN") != null) {
+            logger.info("Starting Slack client");
+            scheduleTask(timer, new EventListenerImpl(streamProvider, new SlackInstance.Builder()
+                    .channelMapper(ChannelMapperFactory.fromConfiguration(configuration, "youtrack-slack.")).build()));
+        }
     }
 
     private void initialize() {
@@ -82,6 +88,7 @@ public class JobStarter {
                 throw error;
             } catch (Throwable ex) {
                 logger.error("Failed to process", ex);
+                ex.printStackTrace();
             }
         }
     }

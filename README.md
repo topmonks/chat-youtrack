@@ -21,12 +21,15 @@ Installation and configuration
 1. List of required properties
     * YOUTRACK_USERNAME - YouTrack username
     * YOUTRACK_PASSWORD - YouTrack password
-    * SLACK_AUTH_TOKEN - token for authentication to Slack REST services
+    * Slack related options
+        * SLACK_AUTH_TOKEN - token for authentication to Slack REST services
+    * Hipchat related options
+        * HIPCHAT_AUTH_TOKEN - token fo authentication to Hipchat REST services
     * APP_DATA_DIR - directory where app will store it's data-files (configuration)
     * YOUTRACK_URL - YouTrack server url
     * ISSUE_HISTORY_WINDOW - Time In minutes - how deep should we look for issues in the past. If set to 10, it means that issues and changes that happened not longer than 10 minutes will be posted to chat server
-2. Run "mvn -DYOUTRACK_USERNAME=user -DYOUTRACK_PASSWORD=pwd ... package" to build war file
-3. Drop war file into servlet container "webapps" directory
+
+2. Run mvn -DAPP_DATA_DIR=$PWD -DYOUTRACK_URL=YOUTRACK_URL -DISSUE_HISTORY_WINDOW=10 -DYOUTRACK_USERNAME=USERNAME -DYOUTRACK_PASSWORD=PASS jetty:run
 
 That's it.
 

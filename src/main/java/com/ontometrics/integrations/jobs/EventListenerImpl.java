@@ -2,6 +2,7 @@ package com.ontometrics.integrations.jobs;
 
 import com.ontometrics.integrations.configuration.*;
 import com.ontometrics.integrations.events.IssueEditSession;
+import com.ontometrics.integrations.events.ProcessEvent;
 import com.ontometrics.integrations.sources.EditSessionsExtractor;
 import com.ontometrics.integrations.sources.StreamProvider;
 import org.apache.commons.configuration.Configuration;
@@ -28,6 +29,14 @@ public class EventListenerImpl implements EventListener {
             return s1.getUpdated().compareTo(s2.getUpdated());
         }
     };
+
+    private static final Comparator<ProcessEvent> UPDATED_TIME_COMPARATOR = new Comparator<ProcessEvent>() {
+        @Override
+        public int compare(ProcessEvent s1, ProcessEvent s2) {
+            return s1.getPublishDate().compareTo(s2.getPublishDate());
+        }
+    };
+
 
     private ChatServer chatServer;
 
@@ -81,21 +90,18 @@ public class EventListenerImpl implements EventListener {
         Date minDateOfEvents = eventProcessorConfiguration
                 .resolveMinimumAllowedDate(eventProcessorConfiguration.loadLastProcessedDate());
 
-        List<IssueEditSession> editSessions = editSessionsExtractor.getLatestEdits(minDateOfEvents);
 
-        log.info("Found {} edit sessions to post.", editSessions.size());
+        List<ProcessEvent> events = editSessionsExtractor.getLatestEvents(minDateOfEvents);
+        log.info("Found {} events to post.", events.size());
+
         final AtomicInteger processedSessionsCount = new AtomicInteger(0);
-        if (editSessions.size() > 0) {
-            Collections.sort(editSessions, CREATED_TIME_COMPARATOR);
-            log.debug("sessions: {}", editSessions);
+        if (events.size() > 0) {
+            Collections.sort(events, UPDATED_TIME_COMPARATOR);
+            log.debug("sessions: {}", events);
             Date lastProcessedSessionDate = null;
-            for (IssueEditSession session : editSessions) {
-                if (session.isCreationEdit()) {
-                    chatServer.postIssueCreation(session.getIssue());
-                } else {
-                    chatServer.post(session);
-                }
-                lastProcessedSessionDate = session.getUpdated();
+            for (ProcessEvent event : events) {
+                chatServer.postIssueCreation(event.getIssue());
+                lastProcessedSessionDate = event.getPublishDate();
                 processedSessionsCount.incrementAndGet();
             }
 

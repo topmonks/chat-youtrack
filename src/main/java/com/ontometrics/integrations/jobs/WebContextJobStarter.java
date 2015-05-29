@@ -8,8 +8,14 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 
 /**
  * Create and schedule tasks on web-application startup with call to {@link JobStarter#scheduleTasks()}

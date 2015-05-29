@@ -3,15 +3,20 @@ package com.ontometrics.integrations.sources;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 
 /**
  * External http resource stream provider. Http call performed by {@link org.apache.http.client.fluent.Executor} and may be
@@ -50,6 +55,7 @@ public class AuthenticatedHttpStreamProvider implements StreamProvider {
      */
     @Override
     public <RES> RES openResourceStream(URL resourceUrl, final InputStreamHandler<RES> inputStreamHandler) throws Exception {
+
         return httpExecutor.execute(Request.Get(resourceUrl.toExternalForm()))
                 .handleResponse(
                     new ResponseHandler<RES>() {
