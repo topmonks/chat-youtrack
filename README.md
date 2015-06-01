@@ -16,7 +16,9 @@ Of course, to do this we have an agent being woken up regularly that:
 1. formats the change info
 1. posts it to the channel
 
-Installation and configuration
+# Installation and configuration
+
+## Local build and setup
 ------------
 1. List of required properties
     * YOUTRACK_USERNAME - YouTrack username
@@ -30,6 +32,11 @@ Installation and configuration
     * ISSUE_HISTORY_WINDOW - Time In minutes - how deep should we look for issues in the past. If set to 10, it means that issues and changes that happened not longer than 10 minutes will be posted to chat server
 
 2. Run mvn -DAPP_DATA_DIR=$PWD -DYOUTRACK_URL=YOUTRACK_URL -DISSUE_HISTORY_WINDOW=10 -DYOUTRACK_USERNAME=USERNAME -DYOUTRACK_PASSWORD=PASS jetty:run
+
+## Docker setup
+
+1. build -t chat-youtrack .
+2. docker run -d -v $PWD:/home/chat-youtrack chat-youtrack -e YOUTRACK_URL=[YOUR_YOUTRACK_URL] -e .....
 
 That's it.
 
