@@ -69,10 +69,10 @@ public class HipchatInstance implements ChatServer {
         if (room != null) {
             String message = buildNewIssueMessage(issue);
             Form form = new Form()
-                    .param("from", "youtrack")
+                    .param("from", "YouTrack")
                     .param("message", message)
                     .param("room_id", room)
-                    .param("color", "yellow")
+                    .param("color", "gray")
                     .param("notify", "false")
                     .param("message_format", "html");
 
