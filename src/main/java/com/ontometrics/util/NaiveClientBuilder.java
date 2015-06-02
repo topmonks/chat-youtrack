@@ -1,5 +1,9 @@
 package com.ontometrics.util;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -14,6 +18,15 @@ import java.security.cert.X509Certificate;
 public class NaiveClientBuilder {
 
     private static SSLContext sslContext = createSSLContext();
+
+    private static CloseableHttpClient httpClient;
+
+    public static HttpClient getHttpClient() {
+        if (httpClient == null) {
+            httpClient = HttpClients.custom().setSslcontext(sslContext).build();
+        }
+        return httpClient;
+    }
 
     public static Client newClient() {
         return newBuilder().build();
