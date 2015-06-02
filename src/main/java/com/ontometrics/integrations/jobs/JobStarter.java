@@ -23,7 +23,7 @@ public class JobStarter {
 
     //TODO move to configuration params
     private static final long EXECUTION_DELAY = 2 * 1000;
-    private static final long REPEAT_INTERVAL = 60 * 1000;
+    private static final long REPEAT_INTERVAL = 10 * 1000;
 
     private List<TimerTask> timerTasks;
     private Timer timer;

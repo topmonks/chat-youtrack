@@ -62,7 +62,6 @@ public class HipchatInstance implements ChatServer {
     @Override
     public void post(IssueEditSession issueEditSession){
         postToChannel(channelMapper.getChannel(issueEditSession.getIssue()), issueEditSession.getIssue());
-        
     }
 
     private void postToChannel(String room, Issue issue) {
@@ -88,31 +87,17 @@ public class HipchatInstance implements ChatServer {
         }
     }
 
-    public String buildNewIssueMessage(Issue newIssue){
-        String description = newIssue.getDescription().replace("\n","");
+    public String buildNewIssueMessage(Issue issue){
+        String description = issue.getDescription().replace("\n","");
         log.info("Description received: "+ description);
         Matcher matcher = PATTERN.matcher(description);
         String statusMsg;
         if(matcher.find()) {
             statusMsg = matcher.group(1);
         } else {
-            statusMsg = "Updated";
+            statusMsg = "issue updated";
         }
-        return String.format(" %s : *%s* <a href=\"%s\">%s</a>", statusMsg, MessageFormatter.getTitleWithoutIssueID(newIssue),newIssue.getLink(),newIssue.getLink());
-    }
-
-    private static class MessageFormatter {
-        static String getIssueLink(Issue issue){
-            return String.format("<%s|%s-%d>", issue.getLink(), issue.getPrefix(), issue.getId());
-        }
-
-        static String getNamedLink(String url, String text){
-            return String.format("<%s|%s>", url, text);
-        }
-
-        static String getTitleWithoutIssueID(Issue issue){
-            return issue.getTitle().substring(issue.getTitle().indexOf(":") + 2);
-        }
+        return String.format("%s <a href=\"%s\">%s</a>", statusMsg, issue.getLink(), issue.getTitle());
     }
 }
 
