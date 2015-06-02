@@ -15,7 +15,7 @@ public class ChannelMapperFactory {
 
     /**
      * "default-slack-channel" specify list of mappings in the format "${youtrack.project.prefix}-${slack.channel.name}"
-     * delimited by ";" (or whatever delimiter which as treated as list delimiter by passed configuration instance"
+     * delimited by ":" (or whatever delimiter which as treated as list delimiter by passed configuration instance"
      * For example "ASOC-vixlet;HA-jobspider;DMAN-dminder"
      * @param configuration configuration
      * @return ChannelMapper instance created from properties "youtrack-to-slack-channels" and "default-slack-channel"
