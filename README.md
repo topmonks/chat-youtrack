@@ -1,7 +1,7 @@
-slack-youtrack
+chat-youtrack
 ==============
 
-Integration of slack and you track.
+Integration of slack and you track, and hipchat :)
 
 Main functionality here is change management:
 
@@ -27,6 +27,8 @@ Of course, to do this we have an agent being woken up regularly that:
         * SLACK_AUTH_TOKEN - token for authentication to Slack REST services
     * Hipchat related options
         * HIPCHAT_AUTH_TOKEN - token fo authentication to Hipchat REST services
+    * ROOM_MAPPING - mapping of messages to rooms, ISSUE_PREFIX_1->ROOM_ID;ISSUE_PREFIX_2->ROOM_ID
+    * DEFAULT_ROOM - default room, where will be all not mapped messages sent
     * APP_DATA_DIR - directory where app will store it's data-files (configuration)
     * YOUTRACK_URL - YouTrack server url
     * ISSUE_HISTORY_WINDOW - Time In minutes - how deep should we look for issues in the past. If set to 10, it means that issues and changes that happened not longer than 10 minutes will be posted to chat server

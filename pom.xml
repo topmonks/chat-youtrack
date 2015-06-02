@@ -61,8 +61,8 @@
         </dependency>
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>fluent-hc-nossl-checks</artifactId>
-          <version>4.4.1</version>
+          <artifactId>fluent-hc</artifactId>
+          <version>4.3.5</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -101,11 +101,6 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.4.1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.evanwong.oss</groupId>
-            <artifactId>hipchat-java7</artifactId>
-            <version>0.4.0</version>
         </dependency>
     </dependencies>
     <build>

@@ -23,6 +23,10 @@ public class ChannelMapperFactory {
     public static ChannelMapper fromConfiguration(Configuration configuration, String propertyPrefix) {
         String [] mappings = configuration.getStringArray(propertyPrefix + CHANNEL_MAPPINGS);
         String defaultChannel = configuration.getString(propertyPrefix + DEFAULT_CHANNEL);
+        return from(defaultChannel, mappings);
+    }
+
+    public static ChannelMapper from(String defaultChannel, String... mappings) {
         ChannelMapper.Builder builder = new ChannelMapper.Builder().defaultChannel(defaultChannel);
         for (String mapping : mappings) {
             String [] keyValue = mapping.split("->");

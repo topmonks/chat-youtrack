@@ -1,25 +1,16 @@
 package com.ontometrics.integrations.configuration;
 
-import com.ontometrics.integrations.events.AttachmentEvent;
 import com.ontometrics.integrations.events.Issue;
-import com.ontometrics.integrations.events.IssueEdit;
 import com.ontometrics.integrations.events.IssueEditSession;
 import com.ontometrics.integrations.sources.ChannelMapper;
-import io.evanwong.oss.hipchat.v2.HipChatClient;
-import io.evanwong.oss.hipchat.v2.commons.NoContent;
-import io.evanwong.oss.hipchat.v2.rooms.MessageColor;
-import io.evanwong.oss.hipchat.v2.rooms.SendRoomNotificationRequestBuilder;
-import org.apache.commons.lang.StringUtils;
+import com.ontometrics.integrations.sources.ChannelMapperFactory;
+import com.ontometrics.util.NaiveClientBuilder;
 import org.slf4j.Logger;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.Response;
-
-import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,41 +23,68 @@ public class HipchatInstance implements ChatServer {
 
     private Logger log = getLogger(HipchatInstance.class);
 
-    private static String TOKEN;
-    private static String ROOM;
-    private static String PROJECT;
-    private static Pattern PATTERN;
+    private static String API_URL = "https://api.hipchat.com";
 
+    private static String TOKEN = ConfigurationFactory.get().getString("PROP.HIPCHAT_AUTH_TOKEN");
+    private static String DEFAULT_ROOM = ConfigurationFactory.get().getString("PROP.DEFAULT_ROOM");
+    private static String[] ROOM_MAPPINGS = ConfigurationFactory.get().getStringArray("PROP.ROOM_MAPPING");
+    private static Pattern PATTERN = Pattern.compile("StatusMsg</th><td>(.*)</td>",Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
 
-    static {
-        TOKEN = ConfigurationFactory.get().getString("PROP.HIPCHAT_AUTH_TOKEN");
-        ROOM = ConfigurationFactory.get().getString("PROP.HIPCHAT_ROOM_ID");
-        PROJECT = ConfigurationFactory.get().getString("PROP.YOUTRACK_PROJECT");
-        PATTERN = Pattern.compile("StatusMsg</th><td>(.*)</td>",Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+    private ChannelMapper channelMapper;
+
+    public HipchatInstance() {
+        channelMapper = ChannelMapperFactory.from(DEFAULT_ROOM, ROOM_MAPPINGS);
     }
 
+    public HipchatInstance(Builder builder) {
+        channelMapper = builder.channelMapper;
+    }
+
+    public static class Builder {
+
+        private ChannelMapper channelMapper;
+
+        public Builder channelMapper(ChannelMapper channelMapper){
+            this.channelMapper = channelMapper;
+            return this;
+        }
+
+        public HipchatInstance build(){
+            return new HipchatInstance(this);
+        }
+    }
 
     @Override
     public void postIssueCreation(Issue issue) {
-        postToChannel(ROOM, issue);
+        postToChannel(channelMapper.getChannel(issue), issue);
     }
 
     @Override
     public void post(IssueEditSession issueEditSession){
-        postToChannel(ROOM, issueEditSession.getIssue());
+        postToChannel(channelMapper.getChannel(issueEditSession.getIssue()), issueEditSession.getIssue());
         
     }
 
-
     private void postToChannel(String room, Issue issue) {
-        if(PROJECT.equalsIgnoreCase(issue.getPrefix())) {
+        if (room != null) {
             String message = buildNewIssueMessage(issue);
-            log.info(String.format("Sending: %s to %s/%s", message,room,TOKEN));
-            HipChatClient client = new HipChatClient(TOKEN);
-            SendRoomNotificationRequestBuilder builder = client.prepareSendRoomNotificationRequestBuilder(room, message);
-            builder.setNotify(true).build().execute();
-        } else {
-            log.info("Doing nothing, issue is from unrelated project: " + issue.getPrefix());
+            Form form = new Form()
+                    .param("from", "youtrack")
+                    .param("message", message)
+                    .param("room_id", room)
+                    .param("color", "yellow")
+                    .param("notify", "false")
+                    .param("message_format", "html");
+
+            Client client = NaiveClientBuilder.newClient();
+            Response response = client.target(API_URL + "/v1/rooms/message?auth_token=" + TOKEN)
+                    .request()
+                    .buildPost(Entity.form(form))
+                    .invoke();
+
+            if (response.getStatus() >= 400) {
+                log.error("notification to hipchat failed - " + response.getStatus() + "\n " + response.readEntity(String.class));
+            }
         }
     }
 
@@ -81,7 +99,6 @@ public class HipchatInstance implements ChatServer {
             statusMsg = "Updated";
         }
         return String.format(" %s : *%s* <a href=\"%s\">%s</a>", statusMsg, MessageFormatter.getTitleWithoutIssueID(newIssue),newIssue.getLink(),newIssue.getLink());
-
     }
 
     private static class MessageFormatter {
@@ -97,6 +114,5 @@ public class HipchatInstance implements ChatServer {
             return issue.getTitle().substring(issue.getTitle().indexOf(":") + 2);
         }
     }
-
 }
 
