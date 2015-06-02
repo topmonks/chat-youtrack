@@ -14,9 +14,9 @@ public class ChannelMapperFactory {
     public static final String DEFAULT_CHANNEL = "default-channel";
 
     /**
-     * "default-slack-channel" specify list of mappings in the format "${youtrack.project.prefix}->${slack.channel.name}"
+     * "default-slack-channel" specify list of mappings in the format "${youtrack.project.prefix}-${slack.channel.name}"
      * delimited by ";" (or whatever delimiter which as treated as list delimiter by passed configuration instance"
-     * For example "ASOC->vixlet;HA->jobspider;DMAN->dminder"
+     * For example "ASOC-vixlet;HA-jobspider;DMAN-dminder"
      * @param configuration configuration
      * @return ChannelMapper instance created from properties "youtrack-to-slack-channels" and "default-slack-channel"
      */
@@ -29,7 +29,7 @@ public class ChannelMapperFactory {
     public static ChannelMapper from(String defaultChannel, String... mappings) {
         ChannelMapper.Builder builder = new ChannelMapper.Builder().defaultChannel(defaultChannel);
         for (String mapping : mappings) {
-            String [] keyValue = mapping.split("->");
+            String [] keyValue = mapping.split("-");
             if (keyValue.length == 2) {
                 builder.addMapping(keyValue[0], keyValue[1]);
             }
