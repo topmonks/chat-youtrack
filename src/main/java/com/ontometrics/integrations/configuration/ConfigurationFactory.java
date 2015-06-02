@@ -17,7 +17,7 @@ public class ConfigurationFactory {
         if (CONFIGURATION == null) {
             try {
                 CONFIGURATION = new PropertiesConfiguration();
-                CONFIGURATION.setListDelimiter(':');
+                CONFIGURATION.setListDelimiter(',');
                 CONFIGURATION.load("application.properties");
             } catch (ConfigurationException e) {
                 throw new RuntimeException("Failed to load configuration", e);
