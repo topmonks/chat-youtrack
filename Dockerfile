@@ -8,9 +8,6 @@ MAINTAINER Jiri filemon Fabian "jiri.fabian@topmonks.com"
 RUN apt-get update
 RUN apt-get install -y maven
 
-RUN cd /home && git clone https://github.com/filemon/fluent-hc-nossl-checks
-RUN cd /home/fluent-hc-nossl-checks && mvn install
-
 RUN mkdir /home/chat-youtrack
 
 WORKDIR /home/chat-youtrack
