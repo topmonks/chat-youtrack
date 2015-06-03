@@ -16,6 +16,7 @@ public class Issue {
     private final URL link;
     private final String creator;
     private final Date created;
+    private boolean statusUpdated;
 
     public Issue(Builder builder) {
         id = builder.id;
@@ -25,6 +26,7 @@ public class Issue {
         title = builder.title;
         description = builder.description;
         link = builder.link;
+        statusUpdated = builder.statusUpdated;
     }
 
     public static class Builder {
@@ -36,6 +38,7 @@ public class Issue {
         private URL link;
         private String creator;
         private Date created;
+        private boolean statusUpdated;
 
         public Builder id(int id){
             this.id = id;
@@ -72,6 +75,11 @@ public class Issue {
             return this;
             }
 
+        public Builder statusUpdated(boolean updated) {
+            this.statusUpdated = updated;
+            return this;
+        }
+
         public Issue build(){
             return new Issue(this);
             }
@@ -104,6 +112,10 @@ public class Issue {
     public URL getLink() {
         return link;
     }
+
+    public boolean isStatusUpdated() {return statusUpdated;}
+
+    public void setIsStatusUpdated(boolean status) { statusUpdated = status;}
 
     @Override
     public boolean equals(Object o) {

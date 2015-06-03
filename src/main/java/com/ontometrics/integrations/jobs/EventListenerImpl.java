@@ -1,6 +1,7 @@
 package com.ontometrics.integrations.jobs;
 
 import com.ontometrics.integrations.configuration.*;
+import com.ontometrics.integrations.events.Issue;
 import com.ontometrics.integrations.events.IssueEditSession;
 import com.ontometrics.integrations.events.ProcessEvent;
 import com.ontometrics.integrations.sources.EditSessionsExtractor;
@@ -9,10 +10,7 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -91,6 +89,9 @@ public class EventListenerImpl implements EventListener {
                 .resolveMinimumAllowedDate(eventProcessorConfiguration.loadLastProcessedDate());
 
 
+        //this list is just to get the type of changes
+        Map<Issue,IssueEditSession> editSessions = editSessionsExtractor.getLatestEditsMap(minDateOfEvents);
+
         List<ProcessEvent> events = editSessionsExtractor.getLatestEvents(minDateOfEvents);
         log.info("Found {} events to post.", events.size());
 
@@ -100,6 +101,10 @@ public class EventListenerImpl implements EventListener {
             log.debug("sessions: {}", events);
             Date lastProcessedSessionDate = null;
             for (ProcessEvent event : events) {
+                IssueEditSession session = editSessions.get(event.getIssue());
+                if(session != null) {
+                    addUpdateInfo(event.getIssue(),session);
+                }
                 chatServer.postIssueCreation(event.getIssue());
                 lastProcessedSessionDate = event.getPublishDate();
                 processedSessionsCount.incrementAndGet();
@@ -109,6 +114,10 @@ public class EventListenerImpl implements EventListener {
             EventProcessorConfiguration.instance().saveLastProcessedEventDate(lastProcessedSessionDate);
         }
         return processedSessionsCount.get();
+    }
+
+    private void addUpdateInfo (Issue issue,IssueEditSession session) {
+        issue.setIsStatusUpdated(session.getIssue().isStatusUpdated());
     }
 
 

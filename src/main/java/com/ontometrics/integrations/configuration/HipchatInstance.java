@@ -4,6 +4,7 @@ import com.ontometrics.integrations.events.Issue;
 import com.ontometrics.integrations.events.IssueEditSession;
 import com.ontometrics.integrations.sources.ChannelMapper;
 import com.ontometrics.integrations.sources.ChannelMapperFactory;
+import com.ontometrics.integrations.sources.StatusMapper;
 import com.ontometrics.util.NaiveClientBuilder;
 import org.slf4j.Logger;
 
@@ -29,29 +30,14 @@ public class HipchatInstance implements ChatServer {
     private static String DEFAULT_ROOM = ConfigurationFactory.get().getString("PROP.DEFAULT_ROOM");
     private static String[] ROOM_MAPPINGS = ConfigurationFactory.get().getStringArray("PROP.ROOM_MAPPING");
     private static Pattern PATTERN = Pattern.compile("StatusMsg</th><td>(.*)</td>",Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+    private static String NOTIFY_ON_STATE_UPDATE_ONLY = ConfigurationFactory.get().getString("PROP.NOTIFY_ON_STATE_UPDATE_ONLY","");
 
     private ChannelMapper channelMapper;
+    private StatusMapper statusMapper;
 
     public HipchatInstance() {
         channelMapper = ChannelMapperFactory.from(DEFAULT_ROOM, ROOM_MAPPINGS);
-    }
-
-    public HipchatInstance(Builder builder) {
-        channelMapper = builder.channelMapper;
-    }
-
-    public static class Builder {
-
-        private ChannelMapper channelMapper;
-
-        public Builder channelMapper(ChannelMapper channelMapper){
-            this.channelMapper = channelMapper;
-            return this;
-        }
-
-        public HipchatInstance build(){
-            return new HipchatInstance(this);
-        }
+        statusMapper = new StatusMapper(NOTIFY_ON_STATE_UPDATE_ONLY);
     }
 
     @Override
@@ -65,7 +51,9 @@ public class HipchatInstance implements ChatServer {
     }
 
     private void postToChannel(String room, Issue issue) {
-        if (room != null) {
+        if(statusMapper.statusUpdatesOnly(issue) && !issue.isStatusUpdated()) {
+            log.info("Doing nothing - notyfying only on status changes");
+        } else if (room != null) {
             String message = buildNewIssueMessage(issue);
             Form form = new Form()
                     .param("from", "YouTrack")
