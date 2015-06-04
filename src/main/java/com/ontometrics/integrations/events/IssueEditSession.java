@@ -141,7 +141,7 @@ public class IssueEditSession {
     }
 
     public String getStatusMsg() {
-        String ret = "";
+        String ret = null;
         for(IssueEdit change:changes) {
             if("StatusMsg".equals(change.getField())) {
                 ret = change.getCurrentValue();
