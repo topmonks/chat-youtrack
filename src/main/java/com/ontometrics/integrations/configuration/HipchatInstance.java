@@ -42,7 +42,7 @@ public class HipchatInstance implements ChatServer {
 
     @Override
     public void postIssueCreation(Issue issue) {
-        postToChannel(channelMapper.getChannel(issue), issue);
+        postToChannel(channelMapper.getChannel(issue), buildNewIssueMessage(issue));
     }
 
     @Override
@@ -50,13 +50,14 @@ public class HipchatInstance implements ChatServer {
         if(statusMapper.statusUpdatesOnly(issueEditSession.getIssue()) && !issueEditSession.hasStateChanged()) {
             log.info("Doing nothing - notyfying only on status changes");
         } else {
-            postToChannel(channelMapper.getChannel(issueEditSession.getIssue()), issueEditSession.getIssue());
+            postToChannel(channelMapper.getChannel(issueEditSession.getIssue()), buildEditSessionMessage(issueEditSession));
         }
     }
 
-    private void postToChannel(String room, Issue issue) {
+
+    private void postToChannel(String room, String message)  {
+        log.info("Going to post:" + message);
         if (room != null) {
-            String message = buildNewIssueMessage(issue);
             Form form = new Form()
                     .param("from", "YouTrack")
                     .param("message", message)
@@ -85,8 +86,17 @@ public class HipchatInstance implements ChatServer {
         if(matcher.find()) {
             statusMsg = matcher.group(1);
         } else {
-            statusMsg = "issue updated";
+            statusMsg = "New ticket";
         }
+        return String.format("%s <a href=\"%s\">%s</a>", statusMsg, issue.getLink(), issue.getTitle());
+    }
+
+    public String buildEditSessionMessage(IssueEditSession session){
+        String statusMsg = session.getStatusMsg();
+        if(statusMsg == null) {
+            statusMsg = "Updated";
+        }
+        Issue issue = session.getIssue();
         return String.format("%s <a href=\"%s\">%s</a>", statusMsg, issue.getLink(), issue.getTitle());
     }
 }

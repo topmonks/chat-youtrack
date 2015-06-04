@@ -140,6 +140,16 @@ public class IssueEditSession {
         return false;
     }
 
+    public String getStatusMsg() {
+        String ret = "";
+        for(IssueEdit change:changes) {
+            if("StatusMsg".equals(change.getField())) {
+                ret = change.getCurrentValue();
+            }
+        }
+        return ret;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
