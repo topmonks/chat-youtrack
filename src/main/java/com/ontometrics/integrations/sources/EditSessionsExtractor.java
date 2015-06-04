@@ -78,14 +78,9 @@ public class EditSessionsExtractor {
      * @return all sessions found that occurred after the last edit
      * @throws Exception
      */
-
     public List<IssueEditSession> getLatestEdits(Date minDate) throws Exception {
-         return (List)getLatestEditsMap(minDate).values();
-    }
-
-    public Map<Issue,IssueEditSession> getLatestEditsMap(Date minDate) throws Exception {
         log.debug("edits since: {}", minDate);
-        Map<Issue,IssueEditSession> sessions = new HashMap<>();
+        List<IssueEditSession> sessions = new ArrayList<>();
         List<ProcessEvent> events = getLatestEvents(minDate);
         Set<Integer> issuesWeHaveGottenChangesFor = new HashSet<>();
         for (ProcessEvent event : events){
@@ -95,7 +90,7 @@ public class EditSessionsExtractor {
                 for (IssueEditSession session : editSessions) {
                     List<AttachmentEvent> attachmentEvents = getAttachmentEvents(event, minDate);
                     if (!attachmentEvents.isEmpty()) {
-                        sessions.put(event.getIssue(),new IssueEditSession.Builder()
+                        sessions.add(new IssueEditSession.Builder()
                                 .updater(attachmentEvents.get(0).getAuthor())
                                 .updated(attachmentEvents.get(0).getCreated())
                                 .issue(event.getIssue())
@@ -103,10 +98,10 @@ public class EditSessionsExtractor {
                                 .build());
                     } else {
                         if (session.hasChanges()) {
-                            sessions.put(session.getIssue(),session);
+                            sessions.add(session);
                         } else {
                             if (session.isCreationEdit()){
-                                sessions.put(session.getIssue(),session);
+                                sessions.add(session);
                             }
                         }
                     }
@@ -174,7 +169,6 @@ public class EditSessionsExtractor {
                 List<ProcessEventChange> currentChanges = new ArrayList<>();
                 LinkedHashSet<Comment> newComments = new LinkedHashSet<>();
                 List<IssueLink> links = new ArrayList<>();
-                boolean isStateChange = false;
 
                 while (eventReader.hasNext()) {
                     XMLEvent nextEvent = eventReader.nextEvent();
@@ -239,8 +233,6 @@ public class EditSessionsExtractor {
                                                     case "description":
                                                         description = elementText;
                                                         break;
-                                                    case "State":
-                                                        isStateChange = true;
                                                     case "links":
                                                         log.debug("found links");
                                                         IssueLink link = new IssueLink.Builder()
@@ -308,7 +300,6 @@ public class EditSessionsExtractor {
                                                 .creator(creator)
                                                 .link(e.getIssue().getLink())
                                                 .description(description)
-                                                .statusUpdated(isStateChange)
                                                 .build();
                                         IssueEditSession session = new IssueEditSession.Builder()
                                                 .updater(updaterName)
@@ -336,7 +327,6 @@ public class EditSessionsExtractor {
                             .description(description)
                             .title(e.getIssue().getTitle())
                             .link(e.getIssue().getLink())
-                            .statusUpdated(isStateChange)
                             .build();
                     IssueEditSession session = new IssueEditSession.Builder()
                             .updater(updaterName)

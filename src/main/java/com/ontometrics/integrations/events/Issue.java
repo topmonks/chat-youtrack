@@ -16,7 +16,6 @@ public class Issue {
     private final URL link;
     private final String creator;
     private final Date created;
-    private boolean statusUpdated;
 
     public Issue(Builder builder) {
         id = builder.id;
@@ -26,7 +25,6 @@ public class Issue {
         title = builder.title;
         description = builder.description;
         link = builder.link;
-        statusUpdated = builder.statusUpdated;
     }
 
     public static class Builder {
@@ -113,9 +111,6 @@ public class Issue {
         return link;
     }
 
-    public boolean isStatusUpdated() {return statusUpdated;}
-
-    public void setIsStatusUpdated(boolean status) { statusUpdated = status;}
 
     @Override
     public boolean equals(Object o) {

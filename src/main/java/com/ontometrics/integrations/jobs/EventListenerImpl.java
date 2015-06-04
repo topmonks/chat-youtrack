@@ -88,25 +88,21 @@ public class EventListenerImpl implements EventListener {
         Date minDateOfEvents = eventProcessorConfiguration
                 .resolveMinimumAllowedDate(eventProcessorConfiguration.loadLastProcessedDate());
 
+        List<IssueEditSession> editSessions = editSessionsExtractor.getLatestEdits(minDateOfEvents);
 
-        //this list is just to get the type of changes
-        Map<Issue,IssueEditSession> editSessions = editSessionsExtractor.getLatestEditsMap(minDateOfEvents);
-
-        List<ProcessEvent> events = editSessionsExtractor.getLatestEvents(minDateOfEvents);
-        log.info("Found {} events to post.", events.size());
-
+        log.info("Found {} edit sessions to post.", editSessions.size());
         final AtomicInteger processedSessionsCount = new AtomicInteger(0);
-        if (events.size() > 0) {
-            Collections.sort(events, UPDATED_TIME_COMPARATOR);
-            log.debug("sessions: {}", events);
+        if (editSessions.size() > 0) {
+            Collections.sort(editSessions, CREATED_TIME_COMPARATOR);
+            log.debug("sessions: {}", editSessions);
             Date lastProcessedSessionDate = null;
-            for (ProcessEvent event : events) {
-                IssueEditSession session = editSessions.get(event.getIssue());
-                if(session != null) {
-                    addUpdateInfo(event.getIssue(),session);
+            for (IssueEditSession session : editSessions) {
+                if (session.isCreationEdit()) {
+                    chatServer.postIssueCreation(session.getIssue());
+                } else {
+                    chatServer.post(session);
                 }
-                chatServer.postIssueCreation(event.getIssue());
-                lastProcessedSessionDate = event.getPublishDate();
+                lastProcessedSessionDate = session.getUpdated();
                 processedSessionsCount.incrementAndGet();
             }
 
@@ -115,10 +111,5 @@ public class EventListenerImpl implements EventListener {
         }
         return processedSessionsCount.get();
     }
-
-    private void addUpdateInfo (Issue issue,IssueEditSession session) {
-        issue.setIsStatusUpdated(session.getIssue().isStatusUpdated());
-    }
-
 
 }

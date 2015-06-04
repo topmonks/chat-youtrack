@@ -30,7 +30,7 @@ public class HipchatInstance implements ChatServer {
     private static String DEFAULT_ROOM = ConfigurationFactory.get().getString("PROP.DEFAULT_ROOM");
     private static String[] ROOM_MAPPINGS = ConfigurationFactory.get().getStringArray("PROP.ROOM_MAPPING");
     private static Pattern PATTERN = Pattern.compile("StatusMsg</th><td>(.*)</td>",Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-    private static String NOTIFY_ON_STATE_UPDATE_ONLY = ConfigurationFactory.get().getString("PROP.NOTIFY_ON_STATE_UPDATE_ONLY","");
+    private static String NOTIFY_ON_STATE_UPDATE_ONLY = ConfigurationFactory.get().getString("PROP.NOTIFY_ON_STATE_UPDATE_ONLY", "");
 
     private ChannelMapper channelMapper;
     private StatusMapper statusMapper;
@@ -47,13 +47,15 @@ public class HipchatInstance implements ChatServer {
 
     @Override
     public void post(IssueEditSession issueEditSession){
-        postToChannel(channelMapper.getChannel(issueEditSession.getIssue()), issueEditSession.getIssue());
+        if(statusMapper.statusUpdatesOnly(issueEditSession.getIssue()) && !issueEditSession.hasStateChanged()) {
+            log.info("Doing nothing - notyfying only on status changes");
+        } else {
+            postToChannel(channelMapper.getChannel(issueEditSession.getIssue()), issueEditSession.getIssue());
+        }
     }
 
     private void postToChannel(String room, Issue issue) {
-        if(statusMapper.statusUpdatesOnly(issue) && !issue.isStatusUpdated()) {
-            log.info("Doing nothing - notyfying only on status changes");
-        } else if (room != null) {
+        if (room != null) {
             String message = buildNewIssueMessage(issue);
             Form form = new Form()
                     .param("from", "YouTrack")

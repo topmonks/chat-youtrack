@@ -131,6 +131,15 @@ public class IssueEditSession {
         return getChanges().size() > 0 || (getComment() != null && !getComment().isDeleted());
     }
 
+    public boolean hasStateChanged() {
+        for(IssueEdit change:changes) {
+            if("State".equals(change.getField())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
