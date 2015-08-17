@@ -57,6 +57,7 @@ public class HipchatInstance implements ChatServer {
 
     private void postToChannel(String room, String message)  {
         log.info("Going to post:" + message);
+        log.info("Room:" + room);
         if (room != null) {
             Form form = new Form()
                     .param("from", "YouTrack")
