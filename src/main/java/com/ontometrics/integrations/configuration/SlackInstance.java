@@ -1,22 +1,20 @@
 package com.ontometrics.integrations.configuration;
 
-import com.ontometrics.integrations.events.*;
+import com.ontometrics.integrations.events.Issue;
+import com.ontometrics.integrations.events.IssueEditSession;
 import com.ontometrics.integrations.sources.ChannelMapper;
+import com.ontometrics.integrations.sources.StatusMapper;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -34,10 +32,15 @@ public class SlackInstance implements ChatServer {
     public static final String TEXT_KEY = "text";
     public static final String CHANNEL_KEY = "channel";
 
+    private static String NOTIFY_ON_STATE_UPDATE_ONLY = ConfigurationFactory.get().getString("PROP.NOTIFY_ON_STATE_UPDATE_ONLY", "");
+    private static Pattern PATTERN = Pattern.compile("StatusMsg</th><td>(.*)</td>",Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+
     private final ChannelMapper channelMapper;
+    private StatusMapper statusMapper;
 
     public SlackInstance(Builder builder) {
         channelMapper = builder.channelMapper;
+        statusMapper = new StatusMapper(NOTIFY_ON_STATE_UPDATE_ONLY);
     }
 
     public static class Builder {
@@ -61,9 +64,12 @@ public class SlackInstance implements ChatServer {
 
     @Override
     public void post(IssueEditSession issueEditSession){
-        String channel = channelMapper.getChannel(issueEditSession.getIssue());
-        postToChannel(channel, buildSessionMessage(issueEditSession));
-        
+        if(statusMapper.statusUpdatesOnly(issueEditSession.getIssue()) && !issueEditSession.hasStateChanged()) {
+            log.info("Doing nothing - notyfying only on status changes");
+        } else {
+            String channel = channelMapper.getChannel(issueEditSession.getIssue());
+            postToChannel(channel, buildEditSessionMessage(issueEditSession));
+        }
     }
 
     private void postToChannel(String channel, String message) {
@@ -86,47 +92,33 @@ public class SlackInstance implements ChatServer {
         return StringUtils.replaceChars(message, "{}", "[]");
     }
 
-    protected String buildSessionMessage(IssueEditSession session) {
-        StringBuilder s = new StringBuilder(String.format("*%s*", session.getUpdater()));
-        String action = session.getComment() != null && !session.getComment().isDeleted() ? "commented on " : "updated";
-        s.append(String.format(" %s %s: ", action, MessageFormatter.getIssueLink(session.getIssue())));
-        if (session.getIssue().getTitle()!=null) {
-            s.append(MessageFormatter.getTitleWithoutIssueID(session.getIssue()));
-        } else {
-            log.debug("title null on issue: {}", session.getIssue());
-        }
-        s.append(System.lineSeparator());
-        for (IssueEdit edit : session.getChanges()){
-            s.append(edit.toString()).append(System.lineSeparator());
-        }
-        if (session.getComment() !=null && !session.getComment().isDeleted()) {
-            s.append(session.getComment().getText()).append(System.lineSeparator());
-        }
-        for (AttachmentEvent attachment : session.getAttachments()){
-            s.append("attached ").append(MessageFormatter.getNamedLink(attachment.getFileUrl(), attachment.getName()))
-                    .append(System.lineSeparator());
-        }
 
-        return s.toString();
+    public String buildNewIssueMessage(Issue issue){
+        String description = issue.getDescription().replace("\n","");
+        log.info("Description received: "+ description);
+        Matcher matcher = PATTERN.matcher(description);
+        String statusMsg;
+        if(matcher.find()) {
+            statusMsg = matcher.group(1);
+        } else {
+            statusMsg = "New ticket";
+        }
+        return String.format("%s <a href=\"%s\">%s</a>", statusMsg, issue.getLink(), issue.getTitle());
     }
 
-    public String buildNewIssueMessage(Issue newIssue){
-        return String.format("*%s* created %s: %s%s%s", newIssue.getCreator(), MessageFormatter.getIssueLink(newIssue), MessageFormatter.getTitleWithoutIssueID(newIssue), System.lineSeparator(), newIssue.getDescription());
+    public String buildEditSessionMessage(IssueEditSession session){
+        String statusMsg = session.getStatusMsg();
+        if(statusMsg == null) {
+            statusMsg = "Updated";
+        }
+        Issue issue = session.getIssue();
+        return String.format(":monk: %s %s", statusMsg, MessageFormatter.getIssueLink(issue));
     }
 
     private static class MessageFormatter {
         static String getIssueLink(Issue issue){
-            return String.format("<%s|%s-%d>", issue.getLink(), issue.getPrefix(), issue.getId());
-        }
-
-        static String getNamedLink(String url, String text){
-            return String.format("<%s|%s>", url, text);
-        }
-
-        static String getTitleWithoutIssueID(Issue issue){
-            return issue.getTitle().substring(issue.getTitle().indexOf(":") + 2);
+            return String.format("<%s|%s>", issue.getLink(), issue.getTitle());
         }
     }
-
 }
 
