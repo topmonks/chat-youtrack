@@ -103,7 +103,7 @@ public class SlackInstance implements ChatServer {
         } else {
             statusMsg = "New ticket";
         }
-        return String.format("%s <a href=\"%s\">%s</a>", statusMsg, issue.getLink(), issue.getTitle());
+        return String.format("%s:%s -> %s</a>", statusMsg, issue.getTitle(),issue.getLink());
     }
 
     public String buildEditSessionMessage(IssueEditSession session){
